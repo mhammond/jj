@@ -84,9 +84,9 @@ pub struct FileState {
     pub file_type: FileType,
     pub mtime: MillisSinceEpoch,
     pub size: u64,
-    /* TODO: What else do we need here? Git stores a lot of fields.
-     * TODO: Could possibly handle case-insensitive file systems keeping an
-     *       Option<PathBuf> with the actual path here. */
+    // TODO: comment!
+    pub path_override: Option<PathBuf>,
+    /* TODO: What else do we need here? Git stores a lot of fields. */
 }
 
 impl FileState {
@@ -101,6 +101,7 @@ impl FileState {
             file_type: FileType::Normal { executable },
             mtime: MillisSinceEpoch(0),
             size: 0,
+            path_override: None,
         }
     }
 
@@ -115,6 +116,7 @@ impl FileState {
             file_type: FileType::Normal { executable },
             mtime: mtime_from_metadata(metadata),
             size,
+            path_override: None,
         }
     }
 
@@ -127,6 +129,7 @@ impl FileState {
             file_type: FileType::Symlink,
             mtime: mtime_from_metadata(metadata),
             size: metadata.len(),
+            path_override: None,
         }
     }
 
@@ -135,6 +138,7 @@ impl FileState {
             file_type: FileType::GitSubmodule,
             mtime: MillisSinceEpoch(0),
             size: 0,
+            path_override: None,
         }
     }
 }
@@ -321,6 +325,7 @@ fn file_state_from_proto(proto: &crate::protos::working_copy::FileState) -> File
         file_type,
         mtime: MillisSinceEpoch(proto.mtime_millis_since_epoch),
         size: proto.size,
+        path_override: None,
     }
 }
 
@@ -464,6 +469,7 @@ fn file_state(metadata: &Metadata) -> Option<FileState> {
             file_type,
             mtime,
             size,
+            path_override: None,
         }
     })
 }
@@ -1454,6 +1460,7 @@ impl TreeState {
                     file_type,
                     mtime: MillisSinceEpoch(0),
                     size: 0,
+                    path_override: None,
                 };
                 changed_file_states.push((path, file_state));
             }
@@ -1875,6 +1882,7 @@ mod tests {
             },
             mtime: MillisSinceEpoch(0),
             size,
+            path_override: None,
         };
         let new_static_entry = |path: &'static str, size| (repo_path(path), new_state(size));
         let new_owned_entry = |path: &str, size| (repo_path(path).to_owned(), new_state(size));
@@ -1923,6 +1931,7 @@ mod tests {
             },
             mtime: MillisSinceEpoch(0),
             size,
+            path_override: None,
         };
         let new_proto_entry = |path: &str, size| {
             file_state_entry_to_proto(repo_path(path).to_owned(), &new_state(size))

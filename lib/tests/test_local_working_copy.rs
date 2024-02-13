@@ -397,6 +397,30 @@ fn test_conflicting_changes_on_disk() {
 }
 
 #[test]
+fn test_tree_builder_case_insensitive_parent() {
+    let settings = testutils::user_settings();
+    let mut test_workspace = TestWorkspace::init(&settings);
+
+    let tree = create_tree(
+        &test_workspace.repo,
+        &[
+            (RepoPath::from_internal_string("foo/bar"), ""),
+            (RepoPath::from_internal_string("FOO/baz"), ""),
+        ],
+    );
+
+    let commit = commit_with_tree(test_workspace.repo.store(), tree.id().clone());
+
+    test_workspace
+        .workspace
+        .check_out(test_workspace.repo.op_id().clone(), None, &commit)
+        .unwrap();
+    let new_tree = test_workspace.snapshot().unwrap();
+    // Fails on some file-systems.
+    assert_eq!(&new_tree.id(), commit.tree_id());
+}
+
+#[test]
 fn test_reset() {
     let settings = testutils::user_settings();
     let mut test_workspace = TestWorkspace::init(&settings);
